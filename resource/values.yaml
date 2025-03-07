@@ -1,0 +1,83 @@
+# Global values
+global:
+  environment: production
+
+# Backend configuration
+backend:
+  name: resource-monitor-backend
+  image:
+    repository: krupaht/lastsh
+    tag: latest
+    pullPolicy: Always
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  port: 8080
+  service:
+    type: NodePort  # Changed from ClusterIP
+    port: 8080
+    nodePort: 30008  # Assigned NodePort
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  env:
+    NODE_ENV: production
+    DB_HOST: resource.postgres.database.azure.com
+    DB_NAME: resource_db
+    DB_PORT: "5432"
+
+serviceAccount:
+  create: false  # Fixed missing value issue
+
+# Frontend configuration
+frontend:
+  name: resource-monitor-frontend
+  image:
+    repository: krupaht/firstsh
+    tag: latest
+    pullPolicy: Always
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  port: 80  # Frontend runs on port 3000
+  service:
+    type: NodePort  # Changed from ClusterIP
+    port: 80
+    nodePort: 30009  # Assigned NodePort
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  env:
+    VITE_BACKEND_URL: http://192.168.49.2:30008  # Updated to point to backend NodePort
+
+# Ingress configuration (DISABLED)
+ingress:
+  enabled: false  # No need for Ingress when using NodePort
+
+# Database configuration for Azure PostgreSQL
+database:
+  host: resource.postgres.database.azure.com
+  name: resource_db
+  port: 5432
+  username: krupa
+  password: Sharath@1996
+  sslMode: require
+
+# Prometheus configuration for monitoring
+prometheus:
+  enabled: true

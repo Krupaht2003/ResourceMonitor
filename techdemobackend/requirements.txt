@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sqlalchemy
+python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
+psutil
+numpy
+kubernetes
+prometheus-client
+prometheus-fastapi-instrumentator
+psycopg2-binary
+itsdangerous

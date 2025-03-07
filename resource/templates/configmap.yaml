@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: resource-monitor-config
+data:
+  # Backend configuration
+  PROMETHEUS_ENABLED: "{{ .Values.prometheus.enabled }}"
+  
+  # Frontend configuration
+  API_URL: "{{ .Values.frontend.env.VITE_BACKEND_URL }}"
