@@ -19,9 +19,9 @@ backend:
       memory: 512Mi
   port: 8080
   service:
-    type: NodePort  # Changed from ClusterIP
+    type: ClusterIP # Changed from ClusterIP
     port: 8080
-    nodePort: 30008  # Assigned NodePort
+
   hpa:
     enabled: true
     minReplicas: 2
@@ -54,9 +54,9 @@ frontend:
       memory: 256Mi
   port: 80  # Frontend runs on port 3000
   service:
-    type: NodePort  # Changed from ClusterIP
+    type: ClusterIP  # Changed from ClusterIP
     port: 80
-    nodePort: 30009  # Assigned NodePort
+    
   hpa:
     enabled: true
     minReplicas: 2
