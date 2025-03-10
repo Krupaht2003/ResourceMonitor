@@ -1,5 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Sidebar from "./components/Sidebar.jsx";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
@@ -12,15 +11,9 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
-  const location = useLocation();
-  const showSidebar = location.pathname.startsWith("/dashboard"); // Show Sidebar only on Dashboard
-
   return (
     <div className="flex">
-      {/* Show Sidebar Only on Dashboard Page */}
-      {showSidebar && <Sidebar />}
-
-      <div className={`flex-1 min-h-screen ${showSidebar ? "ml-64" : ""}`}>
+      <div className="flex-1 min-h-screen">
         <Navbar />
         <div className="mt-16 p-6">
           <Routes>

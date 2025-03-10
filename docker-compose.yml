@@ -3,50 +3,33 @@ version: "3.8"
 services:
   backend:
     build:
-      context: .
-      dockerfile: techdemobackend/Dockerfile
+      context: ./techdemobackend
+      dockerfile: Dockerfile
     ports:
-      - "8002:8002"
+      - "8080:8080"
     environment:
-      - DATABASE_URL=postgresql+psycopg2://postgres:Kru%4019@technical_demo-db-1:5435/resource_db
-    depends_on:
-      db:
-        condition: service_healthy
+      - DATABASE_URL=${DATABASE_URL} # Use secret file instead of env variable
+     # Attach the secret to this service
     networks:
       - app-network
-
+    
   frontend:
     build:
-      context: .
-      dockerfile: techdemofinal/Dockerfile
+      context: ./techdemofinal
+      dockerfile: Dockerfile
     ports:
-      - "3003:80"
+      - "3001:80"
     environment:
-      - VITE_BACKEND_URL=http://backend:8002
+      - VITE_BACKEND_URL=http://localhost:8080
     depends_on:
       - backend
     networks:
       - app-network
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_DB: resource_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Kru@19
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5435:5432"
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
-      interval: 5s
-      retries: 5
-
-volumes:
-  postgres_data:
+    deploy:
+      replicas: 1
+secrets:
+  database_url_secret:
+    external: true  # Docker will look for the secret created in step 1
 
 networks:
   app-network:

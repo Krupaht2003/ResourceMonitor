@@ -10,7 +10,7 @@ function Graph({ data }) {
 
   return (
     <div className="mt-4 p-4 bg-white shadow-md rounded">
-      <h3 className="text-lg font-semibold">Historical Metrics</h3>
+      <h3 className="text-lg font-semibold"></h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={formattedData}>
           <CartesianGrid strokeDasharray="3 3" />

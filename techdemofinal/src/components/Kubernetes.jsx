@@ -3,8 +3,6 @@ import KubernetesDashboard from "./KubernetesDashboard"; // Ensure correct impor
 function Kubernetes() {
   return (
     <div>
-      
-
       {/* Add KubernetesDashboard component */}
       <KubernetesDashboard />
     </div>
@@ -12,3 +10,4 @@ function Kubernetes() {
 }
 
 export default Kubernetes;
+
