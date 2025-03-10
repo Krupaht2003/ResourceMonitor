@@ -1,4 +1,4 @@
-name: Resource Monitoring Tool CI/CD
+ename: Resource Monitoring Tool CI/CD
 
 on:
   push:
@@ -23,7 +23,7 @@ env:
   FRONTEND_IMAGE_NAME: krupaht/resource-monitor-frontend
   CHART_PATH: ./resource
   AKS_RESOURCE_GROUP: rg_techdemo
-  AKS_CLUSTER_NAME: ResourceMonitor
+  AKS_CLUSTER_NAME: resource
   NAMESPACE: default
 
 jobs:
