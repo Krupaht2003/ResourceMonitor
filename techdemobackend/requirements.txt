@@ -9,5 +9,4 @@ numpy
 kubernetes
 prometheus-client
 prometheus-fastapi-instrumentator
-psycopg2-binary
 itsdangerous

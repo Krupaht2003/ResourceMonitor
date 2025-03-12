@@ -56,3 +56,4 @@ def collect_metrics_periodically(interval_seconds=60):
 # Start the background collection when module is imported
 metrics_thread = threading.Thread(target=collect_metrics_periodically, daemon=True)
 metrics_thread.start()
+
