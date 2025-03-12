@@ -82,7 +82,7 @@ jobs:
     name: Deploy to AKS
     needs: build
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || env.DEPLOY_ENV }}
+    environment: ${{ env.DEPLOY_ENV }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -113,7 +113,7 @@ jobs:
           helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
-            --set environment=${{ github.event.inputs.environment || env.DEPLOY_ENV }} \
+            --set environment=${{ env.DEPLOY_ENV }} \
             --set techdemobackend.image.repository=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }} \
             --set techdemobackend.image.tag=${{ github.sha }} \
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
@@ -131,7 +131,7 @@ jobs:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || env.DEPLOY_ENV }}
+    environment: ${{ env.DEPLOY_ENV }}
     steps:
       - name: Azure Login
         uses: azure/login@v1
