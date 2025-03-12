@@ -2,7 +2,18 @@ name: Resource Monitoring Tool CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [ feature/poc ]
+  
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod 
 
 env:
   REGISTRY: docker.io
@@ -12,7 +23,6 @@ env:
   AKS_RESOURCE_GROUP: rg_techdemo
   AKS_CLUSTER_NAME: resource
   NAMESPACE: default
-  DEPLOY_ENV: prod
 
 jobs:
   test:
@@ -82,7 +92,7 @@ jobs:
     name: Deploy to AKS
     needs: build
     runs-on: ubuntu-latest
-    environment: ${{ env.DEPLOY_ENV }}
+    environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -113,7 +123,7 @@ jobs:
           helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
-            --set environment=${{ env.DEPLOY_ENV }} \
+            --set environment=${{ github.event.inputs.environment || 'dev' }} \
             --set techdemobackend.image.repository=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }} \
             --set techdemobackend.image.tag=${{ github.sha }} \
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
@@ -131,7 +141,7 @@ jobs:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
-    environment: ${{ env.DEPLOY_ENV }}
+    environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Azure Login
         uses: azure/login@v1
