@@ -3,18 +3,6 @@ name: Resource Monitoring Tool CI/CD
 on:
   push:
     branches: [ main ]
-  
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        required: true
-        default: 'dev'
-        type: choice
-        options:
-          - dev
-          - staging
-          - prod
 
 env:
   REGISTRY: docker.io
@@ -24,6 +12,7 @@ env:
   AKS_RESOURCE_GROUP: rg_techdemo
   AKS_CLUSTER_NAME: resource
   NAMESPACE: default
+  DEPLOY_ENV: prod
 
 jobs:
   test:
@@ -43,10 +32,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           if [ -f techdemobackend/requirements.txt ]; then pip install -r techdemobackend/requirements.txt; fi
-          if [ -f techdemobackend/requirements-dev.txt ]; then pip install -r techdemobackend/requirements-dev.txt; fi
 
       - name: Run tests
         run: |
+
           cd techdemobackend/tests/
           pytest
 
@@ -93,7 +82,7 @@ jobs:
     name: Deploy to AKS
     needs: build
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ github.event.inputs.environment || env.DEPLOY_ENV }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -124,7 +113,7 @@ jobs:
           helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
-            --set environment=${{ github.event.inputs.environment || 'dev' }} \
+            --set environment=${{ github.event.inputs.environment || env.DEPLOY_ENV }} \
             --set techdemobackend.image.repository=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }} \
             --set techdemobackend.image.tag=${{ github.sha }} \
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
@@ -142,7 +131,7 @@ jobs:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ github.event.inputs.environment || env.DEPLOY_ENV }}
     steps:
       - name: Azure Login
         uses: azure/login@v1

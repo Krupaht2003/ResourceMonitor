@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from jose import JWTError, jwt
 from app.core.security import SECRET_KEY, ALGORITHM
 
+
 router = APIRouter()
 
 async def get_current_user(token: str):
