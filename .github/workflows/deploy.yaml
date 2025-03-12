@@ -1,4 +1,4 @@
-ename: Resource Monitoring Tool CI/CD
+name: Resource Monitoring Tool CI/CD
 
 on:
   push:
