@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: monitoring
+spec:
+  accessModes:
+    - ReadWriteOnce  # For single-node access (best for Grafana)
+  resources:
+    requests:
+      storage: 10Gi  # Define storage size as per requirement
+  storageClassName: managed-csi  # Use Azure's managed storage class

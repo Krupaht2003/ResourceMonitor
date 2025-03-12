@@ -1,2 +1,72 @@
-USER-SUPPLIED VALUES:
-null
+server:
+  service:
+    type: LoadBalancer  # Expose Prometheus via Load Balancer
+  extraScrapeConfigs: |
+    - job_name: "resource"
+      metrics_path: "/metrics"
+      static_configs:
+        - targets: ["57.152.93.134:8080"]  # Replace with your app’s service name and port
+
+alertmanager:
+  enabled: true
+  service:
+    type: LoadBalancer  # Expose Alertmanager via Load Balancer
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+      receiver: 'email-alerts'
+    receivers:
+      - name: 'web.hook'
+        webhook_configs:
+          - url: 'http://127.0.0.1:5001/'
+      - name: 'email-alerts'
+        email_configs:
+          - to: 'krupaht197@gmail.com'
+            from: 'krupaht.ktr@gmail.com'
+            smarthost: 'smtp.gmail.com:587'
+            auth_username: 'krupaht.ktr@gmail.com'
+            auth_password: 'krzulehnqzhclvkz'  # Use App Password for Gmail
+            require_tls: true
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'dev', 'instance']
+
+serverFiles:
+  alerting_rules.yml:
+    groups:
+      - name: "resource_monitoring_alert"
+        rules:
+          - alert: HighCPUUsage
+            expr: resource_monitor_cpu_usage > 15
+            for: 2s
+            labels:
+              severity: critical
+            annotations:
+              summary: "High CPU Usage detected"
+              description: "CPU usage has been above 15% for over 1 minute."
+
+          - alert: HighMemoryUsage
+            expr: resource_monitor_memory_usage > 80
+            for: 2s
+            labels:
+              severity: critical
+            annotations:
+              summary: "High Memory Usage detected"
+              description: "Memory usage has been above 80% for over 1 minute."
+
+          - alert: HighDiskUsage
+            expr: resource_monitor_disk_usage > 80
+            for: 2s
+            labels:
+              severity: critical
+            annotations:
+              summary: "High Disk Usage detected"
+              description: "Disk usage has been above 80% for over 1 minute."
