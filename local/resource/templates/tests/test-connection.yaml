@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['--spider', '--timeout=5', "http://{{ .Values.frontend.name }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.frontend.service.port }}"]
+      args: ['{{ include "resource.fullname" . }}:{{ .Values.backend.service.port }}']
   restartPolicy: Never

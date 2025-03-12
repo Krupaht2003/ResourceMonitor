@@ -30,27 +30,27 @@ spec:
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.database.existingSecret }}
+                  name: db-credentials
                   key: host
             - name: DB_NAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.database.existingSecret }}
+                  name: db-credentials
                   key: dbname
             - name: DB_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.database.existingSecret }}
+                  name: db-credentials
                   key: username
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.database.existingSecret }}
+                  name: db-credentials
                   key: password
             - name: DB_PORT
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.database.existingSecret }}
+                  name: db-credentials
                   key: port
           livenessProbe:
             httpGet:

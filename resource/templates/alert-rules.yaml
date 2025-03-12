@@ -1,0 +1,35 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: resource-usage-alerts
+  namespace: monitoring  # Ensure this matches your Prometheus namespace
+spec:
+  groups:
+    - name: resource-usage-alerts
+      rules:
+        - alert: HighCPUUsage
+          expr: avg by (instance) (cpu_usage_percentage) > 80
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage on {{`{{ $labels.instance }}`}}"
+            description: "CPU usage is above 80% for more than 2 minutes."
+
+        - alert: HighMemoryUsage
+          expr: avg by (instance) (memory_usage_percentage) > 80
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High Memory usage on {{`{{ $labels.instance }}`}}"
+            description: "Memory usage is above 80% for more than 2 minutes."
+
+        - alert: HighDiskUsage
+          expr: avg by (instance) (disk_usage_percentage) > 90
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Critical Disk Usage on {{`{{ $labels.instance }}`}}"
+            description: "Disk usage is above 90% for more than 2 minutes."

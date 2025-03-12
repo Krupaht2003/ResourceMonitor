@@ -1,8 +1,102 @@
+# # Global values
+# global:
+#   environment: production
+
+# # Backend configuration (Internal, Only for Frontend to Access)
+# backend:
+#   name: resource-monitor-backend
+#   image:
+#     repository: krupaht/lastsh
+#     tag: latest
+#     pullPolicy: Always
+#   replicaCount: 2
+#   resources:
+#     requests:
+#       cpu: 100m
+#       memory: 128Mi
+#     limits:
+#       cpu: 500m
+#       memory: 512Mi
+#   port: 8080
+#   service:
+#     type: LoadBalancer  # Keep backend internal
+#     port: 8080
+#   hpa:
+#     enabled: true
+#     minReplicas: 2
+#     maxReplicas: 10
+#     targetCPUUtilizationPercentage: 70
+#     targetMemoryUtilizationPercentage: 80
+#   env:
+#     NODE_ENV: production
+#     DB_HOST: resource.postgres.database.azure.com
+#     DB_NAME: resource_db
+#     DB_PORT: "5432"
+
+# # Frontend configuration (Exposed via Ingress)
+# frontend:
+#   name: resource-monitor-frontend
+#   image:
+#     repository: krupaht/firstsh
+#     tag: latest
+#     pullPolicy: Always
+#   replicaCount: 2
+#   resources:
+#     requests:
+#       cpu: 50m
+#       memory: 64Mi
+#     limits:
+#       cpu: 200m
+#       memory: 256Mi
+#   port: 80
+#   service:
+#     type: LoadBalancer  # Exposed via Ingress
+#     port: 80
+#   hpa:
+#     enabled: true
+#     minReplicas: 2
+#     maxReplicas: 5
+#     targetCPUUtilizationPercentage: 70
+#   env:
+#     VITE_BACKEND_URL: http://resource-monitor-backend.default.svc.cluster.local:8080  # Use internal service name
+
+
+# serviceAccount:
+#   create: false  # Change to 'true' if you need a ServiceAccount
+
+# # Ingress Configuration (Frontend Only)
+# ingress:
+#   enabled: true
+#   className: "nginx"
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+#   hosts:
+#     - host: resource-monitor.krupa.com
+#       paths:
+#         - path: /
+#           pathType: Prefix
+#           backend:
+#             serviceName: resource-monitor-frontend  # Ensure this matches the frontend service name
+#             servicePort: 80
+#   tls: []
+
+# # Database configuration for Azure PostgreSQL
+# database:
+#   existingSecret: db-credentials  # Reference the Kubernetes Secret
+#   sslMode: require
+
+# # Prometheus configuration for monitoring
+# prometheus:
+#   enabled: true
+
+
+
+
 # Global values
 global:
   environment: production
 
-# Backend configuration
+# Backend configuration (Exposed via LoadBalancer)
 backend:
   name: resource-monitor-backend
   image:
@@ -19,9 +113,8 @@ backend:
       memory: 512Mi
   port: 8080
   service:
-    type: ClusterIP # Changed from ClusterIP
+    type: LoadBalancer  # Expose backend via LoadBalancer
     port: 8080
-
   hpa:
     enabled: true
     minReplicas: 2
@@ -34,10 +127,7 @@ backend:
     DB_NAME: resource_db
     DB_PORT: "5432"
 
-serviceAccount:
-  create: false  # Fixed missing value issue
-
-# Frontend configuration
+# Frontend configuration (Exposed via LoadBalancer)
 frontend:
   name: resource-monitor-frontend
   image:
@@ -52,34 +142,31 @@ frontend:
     limits:
       cpu: 200m
       memory: 256Mi
-  port: 80  # Frontend runs on port 3000
+  port: 80
   service:
-    type: ClusterIP  # Changed from ClusterIP
+    type: LoadBalancer  # Expose frontend via LoadBalancer
     port: 80
-    
   hpa:
     enabled: true
     minReplicas: 2
     maxReplicas: 5
     targetCPUUtilizationPercentage: 70
   env:
-    VITE_BACKEND_URL: http://192.168.49.2:30008  # Updated to point to backend NodePort
+    VITE_BACKEND_URL: "http://57.152.93.134:8080"  # Use backend LoadBalancer IP when assigned
 
-# Ingress configuration (DISABLED)
+serviceAccount:
+  create: false  # Change to 'true' if needed
+
+# Ingress Configuration (Frontend Only)
 ingress:
-  enabled: false  # No need for Ingress when using NodePort
+  enabled: false  # Disable ingress since we are using LoadBalancer for frontend
 
 # Database configuration for Azure PostgreSQL
 database:
-  host: resource.postgres.database.azure.com
-  name: resource_db
-  port: 5432
-  username: krupa
-  password: Sharath@1996
+  existingSecret: db-credentials  # Reference the Kubernetes Secret
   sslMode: require
 dbCredentials:
   create: false
-
 
 # Prometheus configuration for monitoring
 prometheus:
