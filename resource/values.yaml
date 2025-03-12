@@ -118,7 +118,7 @@ backend:
   hpa:
     enabled: true
     minReplicas: 2
-    maxReplicas: 10
+    maxReplicas: 5
     targetCPUUtilizationPercentage: 70
     targetMemoryUtilizationPercentage: 80
   env:
