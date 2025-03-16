@@ -10,3 +10,6 @@ kubernetes
 prometheus-client
 prometheus-fastapi-instrumentator
 itsdangerous
+psycopg2-binary
+
+

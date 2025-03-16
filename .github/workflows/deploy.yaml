@@ -137,6 +137,35 @@ jobs:
           echo "Waiting for all pods to be ready..."
           kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=300s
 
+         # ➡️ Rollback Step (Triggered on Failure)
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          LAST_REVISION=$(helm history resource-monitor -n ${{ env.NAMESPACE }} | tail -2 | head -1 | awk '{print $1}')
+          echo "Rolling back to revision $LAST_REVISION"
+          helm rollback resource-monitor $LAST_REVISION --namespace ${{ env.NAMESPACE }}
+
+      # ➡️ Email Notification Step (Triggered on Rollback)
+      - name: Send Email Notification on Rollback
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Rollback Triggered for Resource Monitoring Tool"
+          to: ${{ secrets.EMAIL_RECEIVER }}
+          from: ${{ secrets.EMAIL_USERNAME }}
+          body: |
+            Rollback has been triggered in your CI/CD pipeline.
+          
+            Details:
+            - Project: Resource Monitoring Tool
+            - Environment: ${{ github.event.inputs.environment || 'dev' }}
+            - Rolled back to revision: $LAST_REVISION
+          
+            Please investigate the cause promptly.       
   verify:
     name: Verify Deployment
     needs: deploy

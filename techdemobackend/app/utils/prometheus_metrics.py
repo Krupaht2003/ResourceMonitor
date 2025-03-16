@@ -5,4 +5,5 @@ CPU_USAGE = Gauge("resource_monitor_cpu_usage", "Current CPU usage percentage")
 MEMORY_USAGE = Gauge("resource_monitor_memory_usage", "Current memory usage percentage")
 DISK_USAGE = Gauge("resource_monitor_disk_usage", "Current disk usage percentage")
 
-start_http_server(8000)
+start_http_server(9000)
+

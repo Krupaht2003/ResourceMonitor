@@ -7,7 +7,7 @@ class SystemMetrics(BaseModel):
     cpu_usage: float
     memory_usage: float
     disk_usage: float
-    pod_count: int
+    
 
 class OptimizationRecommendation(BaseModel):
     resource_type: str

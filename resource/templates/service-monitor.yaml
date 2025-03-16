@@ -6,7 +6,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: my-app
+      app: resource-monitor-backend
   endpoints:
     - port: metrics
       path: /metrics

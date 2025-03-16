@@ -1,0 +1,16 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: resource-monitor-scaler
+  namespace: default
+spec:
+  scaleTargetRef:
+    name: resource-monitor-backend
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+  - type: prometheus
+    metadata:
+      serverAddress: "http://4.156.75.148:80"  
+      query: "resource_monitor_requests_total" 
+      threshold: "3"                          
