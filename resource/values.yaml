@@ -1,8 +1,9 @@
 
-
+# Global values
 global:
   environment: production
 
+# Backend configuration (Exposed via LoadBalancer)
 backend:
   name: resource-monitor-backend
   image:
@@ -19,7 +20,7 @@ backend:
       memory: 1024Mi
   port: 8080
   service:
-    type: LoadBalancer  
+    type: LoadBalancer  # Expose backend via LoadBalancer
     port: 8080
   hpa:
     enabled: false
@@ -33,7 +34,7 @@ backend:
     DB_NAME: resource_db
     DB_PORT: "5432"
 
-
+# Frontend configuration (Exposed via LoadBalancer)
 frontend:
   name: resource-monitor-frontend
   image:
@@ -50,7 +51,7 @@ frontend:
       memory: 256Mi
   port: 80
   service:
-    type: LoadBalancer 
+    type: LoadBalancer  # Expose frontend via LoadBalancer
     port: 80
   hpa:
     enabled: true
@@ -58,19 +59,22 @@ frontend:
     maxReplicas: 5
     targetCPUUtilizationPercentage: 70
   env:
-    VITE_BACKEND_URL: "http://51.8.199.133:8080"  
+    VITE_BACKEND_URL: "http://51.8.199.133:8080"  # Use backend LoadBalancer IP when assigned
+
 serviceAccount:
-  create: false  
+  create: false  # Change to 'true' if needed
 
+# Ingress Configuration (Frontend Only)
 ingress:
-  enabled: false  
+  enabled: false  # Disable ingress since we are using LoadBalancer for frontend
 
+# Database configuration for Azure PostgreSQL
 database:
-  existingSecret: db-credentials 
+  existingSecret: db-credentials  # Reference the Kubernetes Secret
   sslMode: require
 dbCredentials:
   create: false
 
-
+# Prometheus configuration for monitoring
 prometheus:
   enabled: true

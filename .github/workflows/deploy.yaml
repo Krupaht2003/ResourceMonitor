@@ -125,7 +125,7 @@ jobs:
             --create-namespace \
             --set environment=${{ github.event.inputs.environment || 'dev' }} \
             --set techdemobackend.image.repository=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }} \
-            --set techdemobackend.image.tag=${{ github.sha }} \ 
+            --set techdemobackend.image.tag=${{ github.sha }} \
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
             --set techdemofinal.image.tag=${{ github.sha }} \
             --atomic \
