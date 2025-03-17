@@ -59,7 +59,7 @@ frontend:
     maxReplicas: 5
     targetCPUUtilizationPercentage: 70
   env:
-    VITE_BACKEND_URL: "http://51.8.199.133:8080"  # Use backend LoadBalancer IP when assigned
+    VITE_BACKEND_URL: "http://4.156.43.86:8080"  # Use backend LoadBalancer IP when assigned
 
 serviceAccount:
   create: false  # Change to 'true' if needed
