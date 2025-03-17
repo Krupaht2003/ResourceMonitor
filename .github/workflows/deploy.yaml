@@ -3,6 +3,8 @@ name: Resource Monitoring Tool CI/CD
 on:
   push:
     branches: [ main ]
+  pull_request:
+    types: [opened, synchronize, reopened]
   
   workflow_dispatch:
     inputs:
@@ -30,13 +32,12 @@ jobs:
     steps:
       - name: Wait for Approval
         uses: hmarr/auto-approve-action@v3
+        if: github.event_name == 'pull_request'
         with:
-          github-token: ${{ secrets.TOKEN }}
-
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     name: Test Application
-    needs: approval
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
