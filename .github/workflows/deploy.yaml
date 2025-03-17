@@ -27,15 +27,6 @@ env:
   NAMESPACE: default
 
 jobs:
-  approval:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for Approval
-        uses: hmarr/auto-approve-action@v3
-        if: github.event_name == 'pull_request'
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
   test:
     name: Test Application
     runs-on: ubuntu-latest
