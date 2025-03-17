@@ -3,6 +3,7 @@
 global:
   environment: production
 
+
 # Backend configuration (Exposed via LoadBalancer)
 backend:
   name: resource-monitor-backend
