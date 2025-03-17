@@ -3,7 +3,6 @@
 global:
   environment: production
 
-
 backend:
   name: resource-monitor-backen
   image:
