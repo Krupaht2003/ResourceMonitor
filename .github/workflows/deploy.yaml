@@ -94,6 +94,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
+    url: http://${{ env.ENDPOINT }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -171,7 +172,8 @@ jobs:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
+    environment: 
+      name: ${{ github.event.inputs.environment }}
     steps:
       - name: Azure Login
         uses: azure/login@v1
