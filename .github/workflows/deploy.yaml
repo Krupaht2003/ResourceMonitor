@@ -88,27 +88,30 @@ jobs:
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:${{ github.sha }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:latest
 
+
   manual_approval:
     name: Manual Approval Step (Production Only)
-    if: github.event.inputs.environment == 'prod'
+    if: |
+      (github.event.inputs.environment == 'prod') ||
+      (github.ref == 'refs/heads/main' && github.event_name == 'push')
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Await manual approval
         run: |
           echo "🔒 Awaiting manual approval..."
           echo "Please review the changes and approve in GitHub Actions."
-          echo "✅ Add a comment 'APPROVE' to this run for proceeding."
+          echo "✅ Click 'Approve' in the Actions tab to proceed."
           
-      - name: Wait for Approval
+      - name: Pause for Manual Approval
         uses: hmarr/auto-approve-action@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ github.event.pull_request.number }}
-
-
+ 
   deploy:
     name: Deploy to AKS
-    needs: build
+    needs: [build, manual_approval]
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     steps:
