@@ -9,7 +9,7 @@ on:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'dev'
+        default: 'prod'
         type: choice
         options:
           - dev
@@ -87,6 +87,16 @@ jobs:
           tags: |
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:${{ github.sha }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:latest
+
+  approval:
+    name: Await Manual Approval
+    if: github.event.inputs.environment == 'prod'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Await Approval
+        run: |
+          echo "Please approve this deployment in the Actions tab."
+          sleep 300  # 5 minutes delay for manual intervention
 
   deploy:
     name: Deploy to AKS
