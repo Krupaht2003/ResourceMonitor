@@ -102,12 +102,7 @@ jobs:
           echo "🔒 Awaiting manual approval..."
           echo "Please review the changes and approve in GitHub Actions."
           echo "✅ Click 'Approve' in the Actions tab to proceed."
-          
-      - name: Pause for Manual Approval
-        uses: hmarr/auto-approve-action@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ github.event.pull_request.number }}
+          sleep 600 
  
   deploy:
     name: Deploy to AKS
