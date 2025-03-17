@@ -18,7 +18,7 @@ function Dashboard() {
   }, []);
 
   return (
-    <div className="flex h-screen p-6">
+    <div className="flex h-screen p-12">
       {/* Main Content */}
       <div className="flex-1">
         <h2 className="text-2xl font-bold">{message}</h2>
