@@ -89,21 +89,6 @@ jobs:
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:latest
 
 
-  manual_approval:
-    name: Manual Approval Step (Production Only)
-    if: |
-      (github.event.inputs.environment == 'prod') ||
-      (github.ref == 'refs/heads/main' && github.event_name == 'push')
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Await manual approval
-        run: |
-          echo "🔒 Awaiting manual approval..."
-          echo "Please review the changes and approve in GitHub Actions."
-          echo "✅ Click 'Approve' in the Actions tab to proceed."
-          sleep 600 
- 
   deploy:
     name: Deploy to AKS
     needs: [build, manual_approval]
