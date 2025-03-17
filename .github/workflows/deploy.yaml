@@ -3,6 +3,18 @@ name: Resource Monitoring Tool CI/CD
 on:
   push:
     branches: [ main ]
+  
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod 
+
 
 env:
   REGISTRY: docker.io
@@ -12,7 +24,6 @@ env:
   AKS_RESOURCE_GROUP: rg_techdemo
   AKS_CLUSTER_NAME: resource
   NAMESPACE: default
-  DEPLOY_ENV: prod
 
 jobs:
   test:
@@ -82,7 +93,7 @@ jobs:
     name: Deploy to AKS
     needs: build
     runs-on: ubuntu-latest
-    environment: ${{ env.DEPLOY_ENV }}
+    environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -113,7 +124,7 @@ jobs:
           helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
-            --set environment=${{ env.DEPLOY_ENV }} \
+            --set environment=${{ github.event.inputs.environment || 'dev' }} \
             --set techdemobackend.image.repository=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }} \
             --set techdemobackend.image.tag=${{ github.sha }} \
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
@@ -127,11 +138,40 @@ jobs:
           echo "Waiting for all pods to be ready..."
           kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=300s
 
+         # ➡️ Rollback Step (Triggered on Failure)
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          LAST_REVISION=$(helm history resource-monitor -n ${{ env.NAMESPACE }} | tail -2 | head -1 | awk '{print $1}')
+          echo "Rolling back to revision $LAST_REVISION"
+          helm rollback resource-monitor $LAST_REVISION --namespace ${{ env.NAMESPACE }}
+
+      # ➡️ Email Notification Step (Triggered on Rollback)
+      - name: Send Email Notification on Rollback
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Rollback Triggered for Resource Monitoring Tool"
+          to: ${{ secrets.EMAIL_RECEIVER }}
+          from: "${{ secrets.EMAIL_USERNAME }}""
+          body: |
+            Rollback has been triggered in your CI/CD pipeline.
+          
+            Details:
+            - Project: Resource Monitoring Tool
+            - Environment: ${{ github.event.inputs.environment || 'dev' }}
+            - Rolled back to revision: $LAST_REVISION
+        
+            Please investigate the cause promptly.       
   verify:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
-    environment: ${{ env.DEPLOY_ENV }}
+    environment: ${{ github.event.inputs.environment || 'dev' }}
     steps:
       - name: Azure Login
         uses: azure/login@v1

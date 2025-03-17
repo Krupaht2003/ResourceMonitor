@@ -2,7 +2,6 @@ import psutil
 from datetime import datetime, timedelta
 from app.models.schemas import SystemMetrics
 from app.utils.prometheus_metrics import CPU_USAGE, MEMORY_USAGE, DISK_USAGE
-from app.utils.kubernetes_client import get_pod_count
 import threading
 import time
 
@@ -20,14 +19,13 @@ def get_current_metrics() -> SystemMetrics:
     MEMORY_USAGE.set(memory.percent)
     DISK_USAGE.set(disk.percent)
 
-    pod_count = get_pod_count()
 
     metrics = SystemMetrics(
         timestamp=datetime.now(),
         cpu_usage=cpu_percent,
         memory_usage=memory.percent,
         disk_usage=disk.percent,
-        pod_count=pod_count
+        
     )
 
     # Use lock when modifying the shared historical_data list

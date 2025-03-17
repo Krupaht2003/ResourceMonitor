@@ -1,35 +1,101 @@
+// import { useEffect, useState } from "react";
+// const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Get backend URL from .env
+// function OptimizationRecommendations() {
+//   const [recommendations, setRecommendations] = useState([]);
+
+//   useEffect(() => {
+//     fetch(`${BACKEND_URL}/api/services/optimization/recommendations`)
+//       .then((res) => res.json())
+//       .then((data) => {
+//         // Remove duplicates based on resource_type and recommended_value
+//         const uniqueRecommendations = Array.from(
+//           new Map(
+//             data.map((rec) => [`${rec.resource_type}-${rec.recommended_value}`, rec])
+//           ).values()
+//         );
+//         setRecommendations(uniqueRecommendations);
+//       });
+//   }, []);
+
+//   return (
+//     <div className="p-4 bg-yellow-100 rounded shadow-md mt-4">
+//       <h3 className="text-lg font-semibold">Optimization Recommendations</h3>
+//       {recommendations.length > 0 ? (
+//         <ul>
+//           {recommendations.map((rec, index) => (
+//             <li key={index}>
+//               <strong>{rec.resource_type}:</strong> Reduce from {rec.current_value} to {rec.recommended_value} ({rec.reason})
+//             </li>
+//           ))}
+//         </ul>
+//       ) : (
+//         <p>No recommendations available.</p>
+//       )}
+//     </div>
+//   );
+// }
+
+// export default OptimizationRecommendations;
+
+
 import { useEffect, useState } from "react";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // Get backend URL from .env
+
 function OptimizationRecommendations() {
   const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/services/optimization/recommendations`)
       .then((res) => res.json())
       .then((data) => {
-        // Remove duplicates based on resource_type and recommended_value
-        const uniqueRecommendations = Array.from(
-          new Map(
-            data.map((rec) => [`${rec.resource_type}-${rec.recommended_value}`, rec])
-          ).values()
-        );
-        setRecommendations(uniqueRecommendations);
-      });
+        console.log("API Response:", data);  // Debugging API response
+        setRecommendations(data);  // Removed filtering logic for now
+      })
+      .catch((error) => {
+        console.error("Error fetching recommendations:", error);
+      })
+      .finally(() => setLoading(false));  // Ensure loading state is handled
   }, []);
 
   return (
-    <div className="p-4 bg-yellow-100 rounded shadow-md mt-4">
-      <h3 className="text-lg font-semibold">Optimization Recommendations</h3>
-      {recommendations.length > 0 ? (
-        <ul>
+    <div className="p-6 bg-gray-100 rounded-lg shadow-md mt-4">
+      <h3 className="text-xl font-bold text-blue-600 mb-4">
+        Optimization Recommendations
+      </h3>
+
+      {loading ? (
+        <p className="text-gray-500">Loading recommendations...</p>
+      ) : recommendations.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {recommendations.map((rec, index) => (
-            <li key={index}>
-              <strong>{rec.resource_type}:</strong> Reduce from {rec.current_value} to {rec.recommended_value} ({rec.reason})
-            </li>
+            <div
+              key={index}
+              className={`p-4 border-2 rounded-lg bg-white shadow-md hover:shadow-lg transition 
+                          ${rec.potential_savings > 0 ? "border-green-500" : "border-red-500"}`}
+            >
+              <h4 className="text-lg font-semibold capitalize text-gray-700">
+                {rec.resource_type.toUpperCase()}
+              </h4>
+              <p className="text-sm text-gray-500 mt-2">
+                <strong>Current Value:</strong> {rec.current_value}%
+              </p>
+              <p className="text-sm text-gray-500">
+                <strong>Recommended Value:</strong> {rec.recommended_value}%
+              </p>
+              <p className="text-sm text-gray-500">
+                <strong>Reason:</strong> {rec.reason}
+              </p>
+              {rec.potential_savings > 0 && (
+                <p className="text-green-500 font-medium mt-2">
+                  Potential Savings: {rec.potential_savings}%
+                </p>
+              )}
+            </div>
           ))}
-        </ul>
+        </div>
       ) : (
-        <p>No recommendations available.</p>
+        <p className="text-gray-500">No recommendations available.</p>
       )}
     </div>
   );

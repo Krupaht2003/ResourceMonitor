@@ -1,6 +1,6 @@
 server:
   service:
-    type: LoadBalancer  # Expose Prometheus via Load Balancer
+    type: LoadBalancer  
   extraScrapeConfigs: |
     - job_name: "resource"
       metrics_path: "/metrics"
@@ -10,7 +10,7 @@ server:
 alertmanager:
   enabled: true
   service:
-    type: LoadBalancer  # Expose Alertmanager via Load Balancer
+    type: LoadBalancer  
   config:
     global:
       resolve_timeout: 5m
@@ -30,7 +30,7 @@ alertmanager:
             from: 'krupaht.ktr@gmail.com'
             smarthost: 'smtp.gmail.com:587'
             auth_username: 'krupaht.ktr@gmail.com'
-            auth_password: 'krzulehnqzhclvkz'  # Use App Password for Gmail
+            auth_password: 'krzulehnqzhclvkz' 
             require_tls: true
     inhibit_rules:
       - source_match:
@@ -38,6 +38,7 @@ alertmanager:
         target_match:
           severity: 'warning'
         equal: ['alertname', 'dev', 'instance']
+
 
 serverFiles:
   alerting_rules.yml:

@@ -54,15 +54,15 @@ spec:
                   key: port
           livenessProbe:
             httpGet:
-              path: /health/health
+              path: /health
               port: {{ .Values.backend.port }}
-            initialDelaySeconds: 30
+            initialDelaySeconds: 60
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health/health
+              path: /health
               port: {{ .Values.backend.port }}
-            initialDelaySeconds: 5
+            initialDelaySeconds: 30
             periodSeconds: 5
           resources:
             requests:

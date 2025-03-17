@@ -6,6 +6,6 @@ persistence:
     - ReadWriteOnce
   size: 10Gi
   storageClassName: managed-csi  # Matches the PVC's storage class
-
 service:
   type: LoadBalancer
+

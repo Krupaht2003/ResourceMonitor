@@ -9,5 +9,7 @@ router = APIRouter()
 async def get_recommendations():
     """Get optimization recommendations"""
     recommendations = generate_optimization_recommendations()
-    print("Generated Recommendations:", recommendations)  # Debugging
+    print("Generated Recommendations:", recommendations)  
     return recommendations
+
+
