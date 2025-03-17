@@ -135,7 +135,7 @@ jobs:
         run: |
           kubectl get pods -n ${{ env.NAMESPACE }}
           echo "Waiting for all pods to be ready..."
-          kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=300s
+          kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=600s
 
          
       - name: Rollback on Failure
