@@ -15,9 +15,9 @@ router = APIRouter()
 
 # Define thresholds
 THRESHOLDS = {
-    "cpu": {"optimal": 30, "warning": 85, "critical": 90},
-    "memory": {"optimal": 30, "warning": 85, "critical": 90},
-    "disk": {"optimal": 30, "warning": 85, "critical": 90},
+    "cpu": {"optimal": 1, "warning": 85, "critical": 90},
+    "memory": {"optimal": 1, "warning": 85, "critical": 90},
+    "disk": {"optimal": 1, "warning": 85, "critical": 90},
 }
 
 def get_health_status(value, thresholds):

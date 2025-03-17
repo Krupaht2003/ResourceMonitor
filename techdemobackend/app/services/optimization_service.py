@@ -28,7 +28,7 @@ def generate_optimization_recommendations():
     recommendations = []
 
     # CPU Optimization Logic
-    if max_cpu > 80:
+    if max_cpu > 80 or avg_cpu > 80:
         recommended_value = 80
         recommendations.append(OptimizationRecommendation(
             resource_type="cpu",
@@ -37,7 +37,7 @@ def generate_optimization_recommendations():
             reason="Critical CPU usage detected. Consider scaling up resources or optimizing CPU-heavy processes.",
             potential_savings=0
         ))
-    elif max_cpu < 20:
+    elif max_cpu < 20 and avg_cpu < 20:
         recommended_value = 20
         recommendations.append(OptimizationRecommendation(
             resource_type="cpu",
@@ -48,7 +48,7 @@ def generate_optimization_recommendations():
         ))
 
     # Memory Optimization Logic
-    if max_memory > 80:
+    if max_memory > 80 or avg_memory > 80:
         recommended_value = 80
         recommendations.append(OptimizationRecommendation(
             resource_type="memory",
@@ -57,7 +57,7 @@ def generate_optimization_recommendations():
             reason="Critical memory usage detected. Consider scaling up resources or improving memory-intensive processes.",
             potential_savings=0
         ))
-    elif max_memory < 40:
+    elif max_memory < 40 and avg_memory < 40:
         recommended_value = 40
         recommendations.append(OptimizationRecommendation(
             resource_type="memory",
@@ -68,7 +68,7 @@ def generate_optimization_recommendations():
         ))
 
     # Disk Optimization Logic
-    if max_disk > 80:
+    if max_disk > 80 or avg_disk > 80:
         recommended_value = 80
         recommendations.append(OptimizationRecommendation(
             resource_type="disk",
@@ -77,7 +77,7 @@ def generate_optimization_recommendations():
             reason="Critical disk usage detected. Consider increasing storage capacity or clearing unnecessary data.",
             potential_savings=0
         ))
-    elif max_disk < 30:
+    elif max_disk < 30 and avg_disk < 30:
         recommended_value = 30
         recommendations.append(OptimizationRecommendation(
             resource_type="disk",

@@ -7,7 +7,6 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -21,3 +20,4 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     access_token = create_access_token({"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
+
