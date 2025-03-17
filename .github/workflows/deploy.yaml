@@ -87,6 +87,7 @@ jobs:
           tags: |
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:${{ github.sha }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:latest
+
   manual_approval:
     name: Manual Approval Step (Production Only)
     if: github.event.inputs.environment == 'prod'
@@ -109,7 +110,7 @@ jobs:
     name: Deploy to AKS
     needs: build
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ github.event.inputs.environment }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -140,7 +141,7 @@ jobs:
           helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
-            --set environment=${{ github.event.inputs.environment || 'dev' }} \
+            --set environment=${{ github.event.inputs.environment }} \
             --set techdemobackend.image.repository=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }} \
             --set techdemobackend.image.tag=${{ github.sha }} \
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
@@ -179,7 +180,7 @@ jobs:
           
             Details:
             - Project: Resource Monitoring Tool
-            - Environment: ${{ github.event.inputs.environment || 'dev' }}
+            - Environment: ${{ github.event.inputs.environment }}
             - Rolled back to revision: $LAST_REVISION
         
             Please investigate the cause promptly.       
@@ -187,7 +188,7 @@ jobs:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ github.event.inputs.environment }}
     steps:
       - name: Azure Login
         uses: azure/login@v1
