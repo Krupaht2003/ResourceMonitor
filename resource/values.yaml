@@ -4,7 +4,7 @@ global:
   environment: production
 
 backend:
-  name: resource-monitor-backen
+  name: resource-monitor-backend
   image:
     repository: krupaht/lastsh
     tag: latest
