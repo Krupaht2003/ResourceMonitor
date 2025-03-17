@@ -2,7 +2,7 @@ name: Resource Monitoring Tool CI/CD
 
 on:
   push:
-    branches: [ feature/poc ]
+    branches: [ main ]
   
   workflow_dispatch:
     inputs:
@@ -15,7 +15,7 @@ on:
           - dev
           - prod 
 
-          
+
 env:
   REGISTRY: docker.io
   BACKEND_IMAGE_NAME: krupaht/resource-monitor-backend
@@ -157,7 +157,7 @@ jobs:
           password: ${{ secrets.EMAIL_PASSWORD }}
           subject: "Rollback Triggered for Resource Monitoring Tool"
           to: ${{ secrets.EMAIL_RECEIVER }}
-          from: ${{ secrets.EMAIL_USERNAME }}
+          from: "${{ secrets.EMAIL_USERNAME }}""
           body: |
             Rollback has been triggered in your CI/CD pipeline.
           
@@ -165,7 +165,7 @@ jobs:
             - Project: Resource Monitoring Tool
             - Environment: ${{ github.event.inputs.environment || 'dev' }}
             - Rolled back to revision: $LAST_REVISION
-          
+        
             Please investigate the cause promptly.       
   verify:
     name: Verify Deployment
