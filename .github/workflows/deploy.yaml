@@ -15,7 +15,6 @@ on:
           - dev
           - prod 
 
-
 env:
   REGISTRY: docker.io
   BACKEND_IMAGE_NAME: krupaht/resource-monitor-backend
