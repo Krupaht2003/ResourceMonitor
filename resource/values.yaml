@@ -38,7 +38,7 @@ backend:
 frontend:
   name: resource-monitor-frontend
   image:
-    repository: krupaht/firstsh
+    repository: krupaht/firstshh
     tag: latest
     pullPolicy: Always
   replicaCount: 2
