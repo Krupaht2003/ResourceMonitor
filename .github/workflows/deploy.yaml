@@ -91,7 +91,7 @@ jobs:
 
   deploy:
     name: Deploy to AKS
-    needs: [build, manual_approval]
+    needs: build
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     steps:
