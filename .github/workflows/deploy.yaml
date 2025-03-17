@@ -25,6 +25,14 @@ env:
   NAMESPACE: default
 
 jobs:
+  approval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Approval
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.TOKEN }}
+
   test:
     name: Test Application
     runs-on: ubuntu-latest
@@ -88,10 +96,9 @@ jobs:
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:${{ github.sha }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:latest
 
-
   deploy:
     name: Deploy to AKS
-    needs: [build, manual_approval]
+    needs: build
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     steps:
