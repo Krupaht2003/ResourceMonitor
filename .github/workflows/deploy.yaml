@@ -37,7 +37,6 @@ jobs:
 
   test:
     name: Test Application
-    needs: approval
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
