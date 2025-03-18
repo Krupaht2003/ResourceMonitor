@@ -8,8 +8,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - DATABASE_URL=${DATABASE_URL} # Use secret file instead of env variable
-     # Attach the secret to this service
+      - DATABASE_URL=${DATABASE_URL} 
     networks:
       - app-network
     
@@ -29,7 +28,7 @@ services:
       replicas: 1
 secrets:
   database_url_secret:
-    external: true  # Docker will look for the secret created in step 1
+    external: true  
 
 networks:
   app-network:
