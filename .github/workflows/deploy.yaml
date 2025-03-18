@@ -3,14 +3,13 @@ name: Resource Monitoring Tool CI/CD
 on:
   push:
     branches: [ main ]
-
   
   workflow_dispatch:
     inputs:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'prod'
+        default: 'dev'
         type: choice
         options:
           - dev
@@ -93,9 +92,7 @@ jobs:
     name: Deploy to AKS
     needs: build
     runs-on: ubuntu-latest
-    environment: 
-      name: ${{ github.event.inputs.environment }}
-      url: http://${{ env.ENDPOINT }}
+    environment: ${{ github.event.inputs.environment }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -140,7 +137,7 @@ jobs:
           echo "Waiting for all pods to be ready..."
           kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=600s
 
-       
+         
       - name: Rollback on Failure
         if: failure()
         run: |
@@ -173,8 +170,7 @@ jobs:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
-    environment: 
-      name: ${{ github.event.inputs.environment }}
+    environment: ${{ github.event.inputs.environment }}
     steps:
       - name: Azure Login
         uses: azure/login@v1
