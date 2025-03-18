@@ -137,7 +137,7 @@ jobs:
         run: |
           kubectl get pods -n ${{ env.NAMESPACE }}
           echo "Waiting for all non-terminating pods to be ready..."
-          kubectl get pods -n ${{ env.NAMESPACE }} --no-headers | grep -v 'Terminating' | awk '{print $1}' | xargs kubectl wait --for=condition=ready pod --timeout=200s -n ${{ env.NAMESPACE }}
+          kubectl get pods -n ${{ env.NAMESPACE }} --no-headers | grep -v 'Terminating' | awk '{print $1}' | xargs kubectl wait --for=condition=ready pod --timeout=00s -n ${{ env.NAMESPACE }}
          
       - name: Rollback on Failure
         if: failure()
