@@ -3,6 +3,7 @@ name: Resource Monitoring Tool CI/CD
 on:
   push:
     branches: [ main ]
+
   
   workflow_dispatch:
     inputs:
@@ -136,9 +137,10 @@ jobs:
       - name: Verify deployment
         run: |
           kubectl get pods -n ${{ env.NAMESPACE }}
-          echo "Waiting for all new pods to be ready..."
+          echo "Waiting for all pods to be ready..."
           kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=600s
 
+       
       - name: Rollback on Failure
         if: failure()
         run: |
@@ -146,6 +148,7 @@ jobs:
           echo "Rolling back to revision $LAST_REVISION"
           helm rollback resource-monitor $LAST_REVISION --namespace ${{ env.NAMESPACE }}
 
+     
       - name: Send Email Notification on Rollback
         if: failure()
         uses: dawidd6/action-send-mail@v3
@@ -165,8 +168,7 @@ jobs:
             - Environment: ${{ github.event.inputs.environment }}
             - Rolled back to revision: $LAST_REVISION
         
-            Please investigate the cause promptly.
-      
+            Please investigate the cause promptly.       
   verify:
     name: Verify Deployment
     needs: deploy
