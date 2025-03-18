@@ -1,7 +1,9 @@
+name: Resource Monitoring Tool CI/CD
+
 on:
   push:
     branches: [ main ]
-  
+
   workflow_dispatch:
     inputs:
       environment:
@@ -11,7 +13,8 @@ on:
         type: choice
         options:
           - dev
-          - prod 
+          - staging
+          - prod
 
 env:
   REGISTRY: docker.io
@@ -19,7 +22,7 @@ env:
   FRONTEND_IMAGE_NAME: krupaht/resource-monitor-frontend
   CHART_PATH: ./resource
   AKS_RESOURCE_GROUP: rg_techdemo
-  AKS_CLUSTER_NAME: resource
+  AKS_CLUSTER_NAME: ResourceMonitor
   NAMESPACE: default
 
 jobs:
@@ -39,51 +42,70 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pytest
-          if [ -f techdemobackend/requirements.txt ]; then pip install -r techdemobackend/requirements.txt; fi
+          if [ -f techdemobackend/requirements.txt ]; then pip install -r backend/requirements.txt; fi
+          if [ -f techdemobackend/requirements-dev.txt ]; then pip install -r backend/requirements-dev.txt; fi
 
       - name: Run tests
         run: |
-          cd techdemobackend/tests/
+          cd techdemobackend/tests
           pytest
 
   build:
-    name: Build and Push Docker Images
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  name: Build and Push Docker Images
+  needs: test
+  runs-on: ubuntu-latest
+  permissions:
+    contents: read
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build and push backend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./techdemobackend
-          file: ./techdemobackend/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+    - name: Extract metadata for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend
+          docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fresource-monitor-frontend
+        tags: |
+          type=sha,format=short
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
 
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./techdemofinal
-          file: ./techdemofinal/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+    - name: Build and push backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./techdemobackend
+        file: ./techdemobackend/Dockerfile
+        push: true
+        tags: |
+          docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend:${{ github.sha }}
+          docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Build and push frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./techdemofinal
+        file: ./techdemofinal/Dockerfile
+        push: true
+        tags: |
+          docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:${{ github.sha }}
+          docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
 
   deploy:
     name: Deploy to AKS
@@ -112,6 +134,13 @@ jobs:
 
       - name: Deploy to AKS with Helm
         run: |
+          # Update Helm chart values with new image tags
+          sed -i "s|repository: .*backend.*|repository: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|tag: .*backend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|repository: .*frontend.*|repository: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|tag: .*frontend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
+          
+          # Install/upgrade Helm chart
           helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
@@ -154,6 +183,9 @@ jobs:
           
       - name: Health check
         run: |
+          # Wait for service to be fully available
           sleep 30
+          
+          # Perform a basic health check on the backend API
           curl -f http://${{ env.ENDPOINT }}/api/health || exit 1
           echo "Health check succeeded!"
