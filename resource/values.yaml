@@ -7,7 +7,7 @@ global:
 backend:
   name: resource-monitor-backend
   image:
-    repository: krupaht/resource-monitor-backend
+    repository: krupaht/lastsh
     tag: latest
     pullPolicy: Always
   replicaCount: 2
@@ -30,15 +30,15 @@ backend:
     targetMemoryUtilizationPercentage: 80
   env:
     NODE_ENV: production
-  envFrom:
-    - secretRef:
-        name: db-credentials
+    DB_HOST: resourcepostgres.postgres.database.azure.com
+    DB_NAME: resource_db
+    DB_PORT: "5432"
 
 # Frontend configuration (Exposed via LoadBalancer)
 frontend:
   name: resource-monitor-frontend
   image:
-    repository: krupaht/resource-monitor-frontend
+    repository: krupaht/first
     tag: latest
     pullPolicy: Always
   replicaCount: 2
