@@ -3,7 +3,6 @@ name: Resource Monitoring Tool CI/CD
 on:
   push:
     branches: [ main ]
-
   
   workflow_dispatch:
     inputs:
