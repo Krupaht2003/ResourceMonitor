@@ -3,7 +3,7 @@ name: Resource Monitoring Tool CI/CD
 on:
   push:
     branches: [ main ]
-  
+
   workflow_dispatch:
     inputs:
       environment:
@@ -45,7 +45,6 @@ jobs:
 
       - name: Run tests
         run: |
-
           cd techdemobackend/tests/
           pytest
 
@@ -116,16 +115,17 @@ jobs:
       - name: Deploy to AKS with Helm
         run: |
           sed -i "s|repository: .*krupaht/resource-monitor-backend.*|repository: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
-          sed -i "s|tag: .*krupaht/resource-monitor-backend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|tag: .*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
           sed -i "s|repository: .*krupaht/resource-monitor-frontend.*|repository: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
-          sed -i "s|tag: .*krupaht/resource-monitor-frontend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
-          
+          sed -i "s|tag: .*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
+
           helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
             --set environment=${{ github.event.inputs.environment }} \
             --set techdemobackend.image.repository=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }} \
             --set techdemobackend.image.tag=${{ github.sha }} \
+            --set techdemobackend.image.pullPolicy=Always \
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
             --set techdemofinal.image.tag=${{ github.sha }} \
             --atomic \
@@ -137,7 +137,6 @@ jobs:
           echo "Waiting for all pods to be ready..."
           kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=600s
 
-         
       - name: Rollback on Failure
         if: failure()
         run: |
@@ -145,27 +144,6 @@ jobs:
           echo "Rolling back to revision $LAST_REVISION"
           helm rollback resource-monitor $LAST_REVISION --namespace ${{ env.NAMESPACE }}
 
-     
-      - name: Send Email Notification on Rollback
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "Rollback Triggered for Resource Monitoring Tool"
-          to: ${{ secrets.EMAIL_RECEIVER }}
-          from: "Resource Monitoring Tool <${{ secrets.EMAIL_USERNAME }}>"
-          body: |
-            Rollback has been triggered in your CI/CD pipeline.
-          
-            Details:
-            - Project: Resource Monitoring Tool
-            - Environment: ${{ github.event.inputs.environment }}
-            - Rolled back to revision: $LAST_REVISION
-        
-            Please investigate the cause promptly.       
   verify:
     name: Verify Deployment
     needs: deploy
@@ -188,7 +166,7 @@ jobs:
           ENDPOINT=$(kubectl get svc -n ${{ env.NAMESPACE }} resource-monitor-frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           echo "Application is accessible at: http://$ENDPOINT"
           echo "ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
-          
+
       - name: Health check
         run: |
           sleep 30
