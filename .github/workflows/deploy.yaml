@@ -3,18 +3,17 @@ name: Resource Monitoring Tool CI/CD
 on:
   push:
     branches: [ main ]
-
+  
   workflow_dispatch:
     inputs:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'dev'
+        default: 'prod'
         type: choice
         options:
           - dev
-          - staging
-          - prod
+          - prod 
 
 env:
   REGISTRY: docker.io
@@ -43,11 +42,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           if [ -f techdemobackend/requirements.txt ]; then pip install -r techdemobackend/requirements.txt; fi
-          if [ -f techdemobackend/requirements-dev.txt ]; then pip install -r techdemobackend/requirements-dev.txt; fi
 
       - name: Run tests
         run: |
-          cd techdemobackend/tests
+
+          cd techdemobackend/tests/
           pytest
 
   build:
@@ -69,20 +68,6 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fresource-monitor-frontend
-          tags: |
-            type=sha,format=short
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-
       - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
@@ -92,8 +77,6 @@ jobs:
           tags: |
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend:${{ github.sha }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -104,14 +87,14 @@ jobs:
           tags: |
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:${{ github.sha }}
             docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
+
+ 
   deploy:
     name: Deploy to AKS
     needs: build
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ github.event.inputs.environment }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -134,17 +117,15 @@ jobs:
 
       - name: Deploy to AKS with Helm
         run: |
-          # Update Helm chart values with new image tags
-          sed -i "s|repository: .*backend.*|repository: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
-          sed -i "s|tag: .*backend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
-          sed -i "s|repository: .*frontend.*|repository: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
-          sed -i "s|tag: .*frontend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|repository: .*krupaht/resource-monitor-backend.*|repository: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|tag: .*krupaht/resource-monitor-backend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|repository: .*krupaht/resource-monitor-frontend.*|repository: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|tag: .*krupaht/resource-monitor-frontend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
           
-          # Install/upgrade Helm chart
           helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
-            --set environment=${{ github.event.inputs.environment || 'dev' }} \
+            --set environment=${{ github.event.inputs.environment }} \
             --set techdemobackend.image.repository=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }} \
             --set techdemobackend.image.tag=${{ github.sha }} \
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
@@ -156,13 +137,42 @@ jobs:
         run: |
           kubectl get pods -n ${{ env.NAMESPACE }}
           echo "Waiting for all pods to be ready..."
-          kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=300s
+          kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=600s
 
+         
+      - name: Rollback on Failure
+        if: failure()
+        run: |
+          LAST_REVISION=$(helm history resource-monitor -n ${{ env.NAMESPACE }} | tail -2 | head -1 | awk '{print $1}')
+          echo "Rolling back to revision $LAST_REVISION"
+          helm rollback resource-monitor $LAST_REVISION --namespace ${{ env.NAMESPACE }}
+
+     
+      - name: Send Email Notification on Rollback
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Rollback Triggered for Resource Monitoring Tool"
+          to: ${{ secrets.EMAIL_RECEIVER }}
+          from: "Resource Monitoring Tool <${{ secrets.EMAIL_USERNAME }}>"
+          body: |
+            Rollback has been triggered in your CI/CD pipeline.
+          
+            Details:
+            - Project: Resource Monitoring Tool
+            - Environment: ${{ github.event.inputs.environment }}
+            - Rolled back to revision: $LAST_REVISION
+        
+            Please investigate the cause promptly.       
   verify:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment || 'dev' }}
+    environment: ${{ github.event.inputs.environment }}
     steps:
       - name: Azure Login
         uses: azure/login@v1
@@ -183,9 +193,6 @@ jobs:
           
       - name: Health check
         run: |
-          # Wait for service to be fully available
           sleep 30
-          
-          # Perform a basic health check on the backend API
           curl -f http://${{ env.ENDPOINT }}/api/health || exit 1
           echo "Health check succeeded!"
