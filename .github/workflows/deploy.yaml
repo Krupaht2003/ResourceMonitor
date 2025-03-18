@@ -3,7 +3,6 @@ name: Resource Monitoring Tool CI/CD
 on:
   push:
     branches: [ main ]
-
   
   workflow_dispatch:
     inputs:
@@ -132,15 +131,25 @@ jobs:
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
             --set techdemofinal.image.tag=${{ github.sha }} \
             --atomic \
-            --timeout 5m
+            --timeout 10m
+
+      - name: Clean up stuck pods (if any)
+        run: |
+          TERMINATING_PODS=$(kubectl get pods -n ${{ env.NAMESPACE }} | grep Terminating | awk '{print $1}')
+          if [ -n "$TERMINATING_PODS" ]; then
+            echo "Deleting stuck pods..."
+            echo "$TERMINATING_PODS" | xargs kubectl delete pod -n ${{ env.NAMESPACE }} --force --grace-period=0
+          else
+            echo "No stuck pods found."
+          fi
 
       - name: Verify deployment
         run: |
           kubectl get pods -n ${{ env.NAMESPACE }}
-          echo "Waiting for all pods to be ready..."
-          kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=600s
+          echo "Waiting for all new pods to be ready..."
+          kubectl wait --for=condition=ready pods -l app=resource-monitor-backend -n ${{ env.NAMESPACE }} --timeout=600s
+          kubectl wait --for=condition=ready pods -l app=resource-monitor-frontend -n ${{ env.NAMESPACE }} --timeout=600s
 
-         
       - name: Rollback on Failure
         if: failure()
         run: |
@@ -148,7 +157,6 @@ jobs:
           echo "Rolling back to revision $LAST_REVISION"
           helm rollback resource-monitor $LAST_REVISION --namespace ${{ env.NAMESPACE }}
 
-     
       - name: Send Email Notification on Rollback
         if: failure()
         uses: dawidd6/action-send-mail@v3
@@ -169,7 +177,8 @@ jobs:
             - Rolled back to revision: $LAST_REVISION
         
             Please investigate the cause promptly.       
-  verify:
+
+verify:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
@@ -189,9 +198,17 @@ jobs:
 
       - name: Get service endpoint
         run: |
-          ENDPOINT=$(kubectl get svc -n ${{ env.NAMESPACE }} resource-monitor-frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          echo "Application is accessible at: http://$ENDPOINT"
-          echo "ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
+          while true; do
+            ENDPOINT=$(kubectl get svc -n ${{ env.NAMESPACE }} resource-monitor-frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+            if [ -n "$ENDPOINT" ]; then
+              echo "Application is accessible at: http://$ENDPOINT"
+              echo "ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
+              break
+            else
+              echo "Waiting for endpoint to be assigned..."
+              sleep 10
+            fi
+          done
           
       - name: Health check
         run: |
