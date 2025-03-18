@@ -7,7 +7,7 @@ global:
 backend:
   name: resource-monitor-backend
   image:
-    repository: krupaht/lastuu
+    repository: krupaht/fastapi
     tag: latest
     pullPolicy: Always
   replicaCount: 2
@@ -38,7 +38,7 @@ backend:
 frontend:
   name: resource-monitor-frontend
   image:
-    repository: krupaht/firstshh
+    repository: krupaht/react
     tag: latest
     pullPolicy: Always
   replicaCount: 2
