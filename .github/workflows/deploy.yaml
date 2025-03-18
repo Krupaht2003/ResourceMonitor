@@ -1,9 +1,7 @@
-name: Resource Monitoring Tool CI/CD
-
 on:
   push:
     branches: [ main ]
-
+  
   workflow_dispatch:
     inputs:
       environment:
@@ -42,13 +40,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           if [ -f techdemobackend/requirements.txt ]; then pip install -r techdemobackend/requirements.txt; fi
-        shell: bash
 
       - name: Run tests
         run: |
           cd techdemobackend/tests/
           pytest
-        shell: bash
 
   build:
     name: Build and Push Docker Images
@@ -76,8 +72,8 @@ jobs:
           file: ./techdemobackend/Dockerfile
           push: true
           tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend:${{ github.sha }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend:latest
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -86,8 +82,8 @@ jobs:
           file: ./techdemofinal/Dockerfile
           push: true
           tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:${{ github.sha }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:latest
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
 
   deploy:
     name: Deploy to AKS
@@ -102,7 +98,6 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-          enable-AzPSSession: true
 
       - name: Set AKS context
         uses: azure/aks-set-context@v3
@@ -115,14 +110,6 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Update Helm Values
-        run: |
-          for SERVICE in backend frontend; do
-            sed -i "s|repository: .*krupaht/resource-monitor-${SERVICE}.*|repository: ${{ env.REGISTRY }}/krupaht/resource-monitor-${SERVICE}|g" ${{ env.CHART_PATH }}/values.yaml
-            sed -i "s|tag: .*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
-          done
-        shell: bash
-
       - name: Deploy to AKS with Helm
         run: |
           helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
@@ -131,31 +118,16 @@ jobs:
             --set environment=${{ github.event.inputs.environment || 'dev' }} \
             --set techdemobackend.image.repository=${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }} \
             --set techdemobackend.image.tag=${{ github.sha }} \
-            --set techdemobackend.image.pullPolicy=Always \
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
             --set techdemofinal.image.tag=${{ github.sha }} \
             --atomic \
             --timeout 5m
-        shell: bash
 
       - name: Verify deployment
         run: |
           kubectl get pods -n ${{ env.NAMESPACE }}
           echo "Waiting for all pods to be ready..."
           kubectl wait --for=condition=ready pods --all -n ${{ env.NAMESPACE }} --timeout=300s
-        shell: bash
-
-      - name: Rollback on Failure
-        if: failure()
-        run: |
-          LAST_REVISION=$(helm history resource-monitor -n ${{ env.NAMESPACE }} | tail -2 | head -1 | awk '{print $1}')
-          if [ -z "$LAST_REVISION" ]; then
-            echo "No previous revision found. Skipping rollback."
-          else
-            echo "Rolling back to revision $LAST_REVISION"
-            helm rollback resource-monitor $LAST_REVISION --namespace ${{ env.NAMESPACE }}
-          fi
-        shell: bash
 
   verify:
     name: Verify Deployment
@@ -179,18 +151,9 @@ jobs:
           ENDPOINT=$(kubectl get svc -n ${{ env.NAMESPACE }} resource-monitor-frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           echo "Application is accessible at: http://$ENDPOINT"
           echo "ENDPOINT=$ENDPOINT" >> $GITHUB_ENV
-        shell: bash
-
+          
       - name: Health check
         run: |
-          for i in {1..5}; do
-            if curl -f http://${{ env.ENDPOINT }}/api/health; then
-              echo "Health check succeeded!"
-              exit 0
-            fi
-            echo "Retrying health check in 10 seconds..."
-            sleep 10
-          done
-          echo "Health check failed!"
-          exit 1
-        shell: bash
+          sleep 30
+          curl -f http://${{ env.ENDPOINT }}/api/health || exit 1
+          echo "Health check succeeded!"
