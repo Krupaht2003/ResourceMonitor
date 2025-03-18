@@ -9,7 +9,7 @@ on:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'prod'
+        default: 'dev'
         type: choice
         options:
           - dev
@@ -17,8 +17,8 @@ on:
 
 env:
   REGISTRY: docker.io
-  BACKEND_IMAGE_NAME: krupaht/resource-monitor-backend
-  FRONTEND_IMAGE_NAME: krupaht/resource-monitor-frontend
+  BACKEND_IMAGE_NAME: krupaht/demofastapi
+  FRONTEND_IMAGE_NAME: krupaht/demoreact
   CHART_PATH: ./resource
   AKS_RESOURCE_GROUP: rg_techdemo
   AKS_CLUSTER_NAME: resource
@@ -75,8 +75,8 @@ jobs:
           file: ./techdemobackend/Dockerfile
           push: true
           tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend:${{ github.sha }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-backend:latest
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/demofastapi:${{ github.sha }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/demofastapi:latest
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
@@ -85,8 +85,8 @@ jobs:
           file: ./techdemofinal/Dockerfile
           push: true
           tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:${{ github.sha }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/resource-monitor-frontend:latest
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/demoreact:${{ github.sha }}
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/demoreact:latest
 
 
  
@@ -117,12 +117,12 @@ jobs:
 
       - name: Deploy to AKS with Helm
         run: |
-          sed -i "s|repository: .*krupaht/resource-monitor-backend.*|repository: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
-          sed -i "s|tag: .*krupaht/resource-monitor-backend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
-          sed -i "s|repository: .*krupaht/resource-monitor-frontend.*|repository: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
-          sed -i "s|tag: .*krupaht/resource-monitor-frontend.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|repository: .*krupaht/demofastapi.*|repository: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|tag: .*krupaht/demofastapi.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|repository: .*krupaht/demoreact.*|repository: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}|g" ${{ env.CHART_PATH }}/values.yaml
+          sed -i "s|tag: .*krupaht/demoreact.*|tag: ${{ github.sha }}|g" ${{ env.CHART_PATH }}/values.yaml
           
-          helm upgrade --install resource-monitor ${{ env.CHART_PATH }} \
+          helm upgrade --install techdemo ${{ env.CHART_PATH }} \
             --namespace ${{ env.NAMESPACE }} \
             --create-namespace \
             --set environment=${{ github.event.inputs.environment }} \
@@ -143,9 +143,9 @@ jobs:
       - name: Rollback on Failure
         if: failure()
         run: |
-          LAST_REVISION=$(helm history resource-monitor -n ${{ env.NAMESPACE }} | tail -2 | head -1 | awk '{print $1}')
+          LAST_REVISION=$(helm history techdemo -n ${{ env.NAMESPACE }} | tail -2 | head -1 | awk '{print $1}')
           echo "Rolling back to revision $LAST_REVISION"
-          helm rollback resource-monitor $LAST_REVISION --namespace ${{ env.NAMESPACE }}
+          helm rollback techdemo $LAST_REVISION --namespace ${{ env.NAMESPACE }}
 
      
       - name: Send Email Notification on Rollback
