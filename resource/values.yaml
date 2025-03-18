@@ -7,7 +7,7 @@ global:
 backend:
   name: resource-monitor-backend
   image:
-    repository: krupaht/resource-monitor-backend
+    repository: docker.io/krupaht/resource-monitor-backend
     tag: latest
     pullPolicy: Always
   replicaCount: 2
@@ -38,7 +38,7 @@ backend:
 frontend:
   name: resource-monitor-frontend
   image:
-    repository: krupaht/resource-monitor-frontend
+    repository: docker.io/krupaht/resource-monitor-frontend
     tag: latest
     pullPolicy: Always
   replicaCount: 2
