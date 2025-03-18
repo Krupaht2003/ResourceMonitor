@@ -178,7 +178,7 @@ jobs:
         
             Please investigate the cause promptly.       
 
-verify:
+  verify:
     name: Verify Deployment
     needs: deploy
     runs-on: ubuntu-latest
