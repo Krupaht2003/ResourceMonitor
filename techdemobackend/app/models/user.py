@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from app.database import Base
+from datetime import datetime
 
 class User(Base):
     __tablename__ = "users"
@@ -8,3 +9,5 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
+    lastname = Column(String)
+    
