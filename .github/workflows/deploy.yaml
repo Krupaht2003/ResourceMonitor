@@ -25,8 +25,26 @@ env:
   NAMESPACE: default
 
 jobs:
+  lint:
+    name: Lint FastAPI Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install flake8
+        run: pip install flake8
+        
+      - name: Run flake8 linting
+        run: flake8 techdemobackend --exit-zero
   test:
     name: Test Application
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -96,6 +114,11 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
     steps:
+      - name: Wait for approval (only for prod)
+        if: ${{ github.event.inputs.environment == 'prod' }}
+        run: echo "Waiting for approval... Please approve the deployment to PROD environment."
+        # uses: hmarr/auto-approve-action@v2
+    
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -131,7 +154,7 @@ jobs:
             --set techdemofinal.image.repository=${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }} \
             --set techdemofinal.image.tag=${{ github.sha }} \
             --atomic \
-            --timeout 5m
+            --timeout 3m
 
       - name: Verify deployment
         run: |
@@ -195,3 +218,8 @@ jobs:
           sleep 30
           curl -f http://${{ env.ENDPOINT }}/api/health || exit 1
           echo "Health check succeeded!"
+
+
+
+
+
